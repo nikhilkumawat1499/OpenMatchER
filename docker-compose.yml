@@ -1,0 +1,47 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: openmatcher
+      POSTGRES_PASSWORD: openmatcher
+      POSTGRES_DB: openmatcher
+    ports: ["5432:5432"]
+    volumes: ["postgres-data:/var/lib/postgresql/data"]
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+
+  opensearch:
+    image: opensearchproject/opensearch:2.18.0
+    environment:
+      discovery.type: single-node
+      plugins.security.disabled: "true"
+      OPENSEARCH_INITIAL_ADMIN_PASSWORD: OpenMatcher123!
+    ports: ["9200:9200"]
+    volumes: ["opensearch-data:/usr/share/opensearch/data"]
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    environment:
+      OPENMATCHER_DATABASE_URL: postgresql+psycopg://openmatcher:openmatcher@postgres:5432/openmatcher
+      OPENMATCHER_ALLOWED_ORIGINS: '["http://localhost:3000"]'
+    ports: ["8000:8000"]
+    volumes: ["./data:/app/data"]
+    depends_on: [postgres, redis, opensearch]
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/frontend.Dockerfile
+    environment:
+      NEXT_PUBLIC_API_BASE: http://localhost:8000
+    ports: ["3000:3000"]
+    depends_on: [backend]
+
+volumes:
+  postgres-data:
+  opensearch-data:
+

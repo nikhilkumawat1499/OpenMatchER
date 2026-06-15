@@ -1,0 +1,45 @@
+[
+  {
+    "id": "org-001",
+    "name": "United Nations Development Programme",
+    "website": "https://www.undp.org",
+    "country": "US",
+    "city": "New York"
+  },
+  {
+    "id": "org-002",
+    "name": "UN Development Program",
+    "website": "https://www.undp.org",
+    "country": "US",
+    "city": "New York"
+  },
+  {
+    "id": "org-003",
+    "name": "International Business Machines Corporation",
+    "website": "https://www.ibm.com",
+    "country": "US",
+    "city": "Armonk"
+  },
+  {
+    "id": "org-004",
+    "name": "IBM Corp",
+    "website": "https://www.ibm.com",
+    "country": "US",
+    "city": "Armonk"
+  },
+  {
+    "id": "org-005",
+    "name": "Tata Consultancy Services Limited",
+    "website": "https://www.tcs.com",
+    "country": "India",
+    "city": "Mumbai"
+  },
+  {
+    "id": "org-006",
+    "name": "TCS Ltd",
+    "website": "https://www.tcs.com",
+    "country": "India",
+    "city": "Mumbai"
+  }
+]
+

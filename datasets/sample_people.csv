@@ -1,0 +1,12 @@
+id,name,email,phone,address,city,country
+1,John A Smith,john.smith@example.com,+1-415-555-0101,100 Market Street,San Francisco,US
+2,Jon Smith,jsmith@example.com,4155550101,100 Market St,San Francisco,US
+3,Jane Marie Doe,jane.doe@example.com,+1-212-555-0177,45 Madison Avenue,New York,US
+4,J. M. Doe,jdoe@example.com,2125550177,45 Madison Ave,New York,US
+5,Rahul Kumar,rahul.kumar@example.in,+91-98765-43210,221 MG Road,Bengaluru,India
+6,Rahul K,rahulk@example.in,9876543210,221 Mahatma Gandhi Road,Bangalore,India
+7,Sofia Garcia,sofia.garcia@example.es,+34-600-123-456,12 Calle Mayor,Madrid,Spain
+8,Sophia Garcia,s.garcia@example.es,600123456,12 C Mayor,Madrid,Spain
+9,Michael Chen,michael.chen@example.com,+1-650-555-0198,88 University Ave,Palo Alto,US
+10,Michelle Chen,michelle.chen@example.com,+1-650-555-0199,90 University Ave,Palo Alto,US
+
