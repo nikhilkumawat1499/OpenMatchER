@@ -86,15 +86,56 @@ The benchmark runner evaluates Levenshtein, Jaro-Winkler, TF-IDF, embeddings, hy
 
 The scalability section runs a synthetic blocking/count workload at 1K, 10K, 100K, and 1M records for both the local engine path and Spark `local[*]`. Spark benchmarks require Java and `pyspark`; if Spark cannot start in the current environment, the report marks those rows as skipped instead of projecting numbers.
 
+Current local benchmark snapshot:
+
+| Method | Micro Precision | Micro Recall | Micro F1 | Macro F1 |
+| --- | ---: | ---: | ---: | ---: |
+| LLM Hybrid | 0.8462 | 0.8980 | 0.8713 | 0.8822 |
+| Hybrid | 0.7925 | 0.8571 | 0.8235 | 0.8407 |
+| TF-IDF | 0.7959 | 0.7959 | 0.7959 | 0.8083 |
+| Embeddings | 0.9630 | 0.5306 | 0.6842 | 0.6670 |
+| Jaro-Winkler | 0.9524 | 0.4082 | 0.5714 | 0.5509 |
+| Levenshtein | 0.9286 | 0.2653 | 0.4127 | 0.3996 |
+
+These demo datasets are intentionally small and reproducible; the point is to show the progression from conservative string matching to semantic and LLM-assisted matching, not to claim a universal production score.
+
+## Candidate Generation
+
+OpenMatchER avoids treating entity resolution as a raw O(N²) scoring problem. The matching roadmap separates candidate generation from scoring:
+
+1. Normalize records and compute reusable blocking keys.
+2. Generate candidates with exact, token, prefix, phonetic, and sorted-neighborhood blocking.
+3. Add embedding or ANN retrieval for semantic candidates.
+4. Score candidates with cheap deterministic and vector features.
+5. Auto-accept high-confidence matches and auto-reject low-confidence pairs.
+6. Route only uncertain pairs to LLM adjudication or human review.
+
+This is also the cost-control story for LLM matching: LLMs are not intended to review every candidate pair. They sit after blocking and cheap scorers, and only see bounded score bands such as `0.70` to `0.88`.
+
+## OpenMatchER vs Splink
+
+| Capability | OpenMatchER | Splink |
+| --- | --- | --- |
+| Upload/configure/review UI | Yes | No |
+| LLM uncertain-pair adjudication | Yes | No |
+| Benchmark report with PR/ROC/confusion matrix | Yes | Limited |
+| Human review workflow | Yes | Partial |
+| Local-first demo workflow | Yes | Yes |
+| Spark execution | Adapter and roadmap | Mature |
+| Best fit | Productized ER workbench | Large-scale probabilistic linkage library |
+
+Splink is excellent for scalable probabilistic linkage. OpenMatchER is designed as a fuller workbench around the matching lifecycle: upload data, configure matching, compare approaches, review clusters, and export explainable results.
+
 ## Screenshots
 
-Screenshots are intentionally not checked in yet. The first stable public release should include:
+Screenshots should be captured from the running UI and stored under `docs/screenshots/` before the first tagged release:
 
-- Dashboard and project setup.
-- Dataset upload and preview.
-- Pipeline configuration.
-- Cluster review.
-- Benchmark leaderboard.
+- `dashboard.png`: project workspace and summary cards.
+- `dataset-upload-preview.png`: upload panel and dataset preview.
+- `pipeline-configuration.png`: threshold and LLM uncertain-pair controls.
+- `cluster-review.png`: matched pairs with scores and reasoning.
+- `benchmark-leaderboard.png`: leaderboard with micro/macro metrics.
+- `benchmark-report.png`: generated HTML report with curves and scalability table.
 
 ## Repository Layout
 
