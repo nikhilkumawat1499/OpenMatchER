@@ -103,14 +103,20 @@ Amazon-GoogleProducts benchmark:
 
 ```bash
 PYTHONPATH=backend:matching:pipelines:llm:embeddings \
-  python examples/run_amazon_google_products.py --scorer llm_hybrid --threshold 0.93
+  python examples/run_amazon_google_products.py --scorer llm_hybrid --threshold 0.35
+
+PYTHONPATH=backend:matching:pipelines:llm:embeddings \
+  python examples/run_amazon_google_products.py --scorer llm_hybrid --cross-validate --folds 5
 ```
 
 Current tuned result on the local Amazon-GoogleProducts folder:
 
-| Dataset | Method | Predicted Pairs | Precision | Recall | F1 |
-| --- | --- | ---: | ---: | ---: | ---: |
-| Amazon-GoogleProducts | LLM Hybrid reranker | 990 | 1.0000 | 0.7615 | 0.8646 |
+| Evaluation | Method | Precision | Recall | F1 |
+| --- | --- | ---: | ---: | ---: |
+| Fitted full candidate set | LLM Hybrid reranker | 0.9130 | 0.6862 | 0.7835 |
+| 5-fold candidate-pair CV | LLM Hybrid reranker | 0.6680 ± 0.0117 | 0.6845 ± 0.0143 | 0.6760 ± 0.0090 |
+
+The cross-validation report is written to `reports/amazon_google_cross_validation.json`. This is a candidate-pair validation split; a stricter paper-grade benchmark should also add entity-disjoint or dataset-level splits.
 
 ## Candidate Generation
 

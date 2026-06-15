@@ -1,0 +1,74 @@
+{
+  "scorer": "llm_hybrid",
+  "folds": 5,
+  "validation": "stratified_candidate_pair_cross_validation",
+  "amazon_records": 1363,
+  "google_records": 3226,
+  "gold_matches": 1300,
+  "candidate_pairs": 14985,
+  "candidate_gold_matches": 1122,
+  "precision_mean": 0.668,
+  "precision_std": 0.0117,
+  "recall_mean": 0.6845,
+  "recall_std": 0.0143,
+  "f1_mean": 0.676,
+  "f1_std": 0.009,
+  "fold_results": [
+    {
+      "fold": 1,
+      "threshold": 0.42,
+      "train_f1": 0.855,
+      "precision": 0.6653,
+      "recall": 0.7098,
+      "f1": 0.6868,
+      "true_positive": 159,
+      "false_positive": 80,
+      "false_negative": 65
+    },
+    {
+      "fold": 2,
+      "threshold": 0.4,
+      "train_f1": 0.8534,
+      "precision": 0.6844,
+      "recall": 0.6875,
+      "f1": 0.686,
+      "true_positive": 154,
+      "false_positive": 71,
+      "false_negative": 70
+    },
+    {
+      "fold": 3,
+      "threshold": 0.39,
+      "train_f1": 0.8051,
+      "precision": 0.6496,
+      "recall": 0.6786,
+      "f1": 0.6638,
+      "true_positive": 152,
+      "false_positive": 82,
+      "false_negative": 72
+    },
+    {
+      "fold": 4,
+      "threshold": 0.41,
+      "train_f1": 0.8523,
+      "precision": 0.6652,
+      "recall": 0.68,
+      "f1": 0.6725,
+      "true_positive": 153,
+      "false_positive": 77,
+      "false_negative": 72
+    },
+    {
+      "fold": 5,
+      "threshold": 0.42,
+      "train_f1": 0.8302,
+      "precision": 0.6757,
+      "recall": 0.6667,
+      "f1": 0.6711,
+      "true_positive": 150,
+      "false_positive": 72,
+      "false_negative": 75
+    }
+  ],
+  "note": "Candidate-pair cross-validation validates the learned reranker on held-out candidate pairs. A future paper-grade benchmark should also add entity-disjoint or dataset-level splits."
+}
