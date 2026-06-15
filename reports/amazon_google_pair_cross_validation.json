@@ -23,7 +23,11 @@
       "f1": 0.6868,
       "true_positive": 159,
       "false_positive": 80,
-      "false_negative": 65
+      "false_negative": 65,
+      "train_pairs": 11988,
+      "test_pairs": 2997,
+      "train_gold_pairs": 898,
+      "test_gold_pairs": 224
     },
     {
       "fold": 2,
@@ -34,7 +38,11 @@
       "f1": 0.686,
       "true_positive": 154,
       "false_positive": 71,
-      "false_negative": 70
+      "false_negative": 70,
+      "train_pairs": 11988,
+      "test_pairs": 2997,
+      "train_gold_pairs": 898,
+      "test_gold_pairs": 224
     },
     {
       "fold": 3,
@@ -45,7 +53,11 @@
       "f1": 0.6638,
       "true_positive": 152,
       "false_positive": 82,
-      "false_negative": 72
+      "false_negative": 72,
+      "train_pairs": 11988,
+      "test_pairs": 2997,
+      "train_gold_pairs": 898,
+      "test_gold_pairs": 224
     },
     {
       "fold": 4,
@@ -56,7 +68,11 @@
       "f1": 0.6725,
       "true_positive": 153,
       "false_positive": 77,
-      "false_negative": 72
+      "false_negative": 72,
+      "train_pairs": 11988,
+      "test_pairs": 2997,
+      "train_gold_pairs": 897,
+      "test_gold_pairs": 225
     },
     {
       "fold": 5,
@@ -67,8 +83,12 @@
       "f1": 0.6711,
       "true_positive": 150,
       "false_positive": 72,
-      "false_negative": 75
+      "false_negative": 75,
+      "train_pairs": 11988,
+      "test_pairs": 2997,
+      "train_gold_pairs": 897,
+      "test_gold_pairs": 225
     }
   ],
-  "note": "Candidate-pair cross-validation validates the learned reranker on held-out candidate pairs. A future paper-grade benchmark should also add entity-disjoint or dataset-level splits."
+  "note": "Candidate-pair cross-validation validates the learned reranker on held-out candidate pairs. Entity-disjoint validation is stricter because it prevents source entity leakage across folds."
 }

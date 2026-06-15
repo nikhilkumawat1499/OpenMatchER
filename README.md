@@ -107,6 +107,9 @@ PYTHONPATH=backend:matching:pipelines:llm:embeddings \
 
 PYTHONPATH=backend:matching:pipelines:llm:embeddings \
   python examples/run_amazon_google_products.py --scorer llm_hybrid --cross-validate --folds 5
+
+PYTHONPATH=backend:matching:pipelines:llm:embeddings \
+  python examples/run_amazon_google_products.py --scorer llm_hybrid --cross-validate --folds 5 --validation entity
 ```
 
 Current tuned result on the local Amazon-GoogleProducts folder:
@@ -114,9 +117,10 @@ Current tuned result on the local Amazon-GoogleProducts folder:
 | Evaluation | Method | Precision | Recall | F1 |
 | --- | --- | ---: | ---: | ---: |
 | Fitted full candidate set | LLM Hybrid reranker | 0.9130 | 0.6862 | 0.7835 |
-| 5-fold candidate-pair CV | LLM Hybrid reranker | 0.6680 ± 0.0117 | 0.6845 ± 0.0143 | 0.6760 ± 0.0090 |
+| 5-fold candidate-pair CV | LLM Hybrid reranker | 0.6680 +/- 0.0117 | 0.6845 +/- 0.0143 | 0.6760 +/- 0.0090 |
+| 5-fold entity-disjoint CV | LLM Hybrid reranker | 0.7068 +/- 0.1020 | 0.6241 +/- 0.0458 | 0.6596 +/- 0.0605 |
 
-The cross-validation report is written to `reports/amazon_google_cross_validation.json`. This is a candidate-pair validation split; a stricter paper-grade benchmark should also add entity-disjoint or dataset-level splits.
+The pair-level report is written to `reports/amazon_google_pair_cross_validation.json`; the stricter entity-disjoint report is written to `reports/amazon_google_entity_cross_validation.json`. The cross-validation scores are the primary generalization estimates. The fitted full candidate-set score is useful as a diagnostic, but it is optimistic because the model is trained and evaluated on the same candidate universe.
 
 ## Candidate Generation
 

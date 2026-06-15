@@ -17,7 +17,7 @@ from rapidfuzz import fuzz
 from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import StratifiedKFold
+from sklearn.model_selection import KFold, StratifiedKFold
 
 from openmatcher_llm import AdjudicationRequest, LLMProviderError, provider_from_name
 from openmatcher_matching.blocking import soundex
@@ -300,15 +300,59 @@ def best_threshold(true_labels: np.ndarray, scores: np.ndarray) -> tuple[float, 
 def cross_validate(
     scorer: str = "llm_hybrid",
     folds: int = 5,
+    validation: str = "pair",
     random_state: int = 7,
 ) -> dict:
     if scorer == "deterministic":
         raise ValueError("Cross-validation is only supported for learned scorers.")
 
     dataset = build_feature_dataset()
-    splitter = StratifiedKFold(n_splits=folds, shuffle=True, random_state=random_state)
+    if validation == "pair":
+        splits = StratifiedKFold(n_splits=folds, shuffle=True, random_state=random_state).split(
+            dataset.feature_matrix,
+            dataset.labels,
+        )
+        validation_name = "stratified_candidate_pair_cross_validation"
+        note = (
+            "Candidate-pair cross-validation validates the learned reranker on held-out candidate pairs. "
+            "Entity-disjoint validation is stricter because it prevents source entity leakage across folds."
+        )
+    elif validation == "entity":
+        amazon_ids = sorted({left for left, _ in dataset.pair_ids})
+        google_ids = sorted({right for _, right in dataset.pair_ids})
+        amazon_splits = list(KFold(n_splits=folds, shuffle=True, random_state=random_state).split(amazon_ids))
+        google_splits = list(KFold(n_splits=folds, shuffle=True, random_state=random_state).split(google_ids))
+        splits = []
+        for (amazon_train, amazon_test), (google_train, google_test) in zip(amazon_splits, google_splits):
+            train_amazon = {amazon_ids[index] for index in amazon_train}
+            test_amazon = {amazon_ids[index] for index in amazon_test}
+            train_google = {google_ids[index] for index in google_train}
+            test_google = {google_ids[index] for index in google_test}
+            train_index = [
+                index
+                for index, (amazon_id, google_id) in enumerate(dataset.pair_ids)
+                if amazon_id in train_amazon and google_id in train_google
+            ]
+            test_index = [
+                index
+                for index, (amazon_id, google_id) in enumerate(dataset.pair_ids)
+                if amazon_id in test_amazon and google_id in test_google
+            ]
+            splits.append((np.array(train_index), np.array(test_index)))
+        validation_name = "entity_disjoint_cross_validation"
+        note = (
+            "Entity-disjoint validation holds out source entities before evaluating candidate pairs, "
+            "reducing leakage from repeated products across train and test folds."
+        )
+    else:
+        raise ValueError("validation must be either 'pair' or 'entity'")
+
     rows = []
-    for fold, (train_index, test_index) in enumerate(splitter.split(dataset.feature_matrix, dataset.labels), start=1):
+    for fold, (train_index, test_index) in enumerate(splits, start=1):
+        if len(train_index) == 0 or len(test_index) == 0:
+            raise ValueError(f"Fold {fold} has an empty train or test split.")
+        if len(np.unique(dataset.labels[train_index])) < 2 or len(np.unique(dataset.labels[test_index])) < 2:
+            raise ValueError(f"Fold {fold} does not contain both positive and negative candidate pairs.")
         model = model_for_scorer(scorer)
         model.fit(dataset.feature_matrix[train_index], dataset.labels[train_index])
         train_scores = model.predict_proba(dataset.feature_matrix[train_index])[:, 1]
@@ -326,6 +370,10 @@ def cross_validate(
                 "true_positive": tp,
                 "false_positive": fp,
                 "false_negative": fn,
+                "train_pairs": int(len(train_index)),
+                "test_pairs": int(len(test_index)),
+                "train_gold_pairs": int(dataset.labels[train_index].sum()),
+                "test_gold_pairs": int(dataset.labels[test_index].sum()),
             }
         )
 
@@ -338,7 +386,7 @@ def cross_validate(
     return {
         "scorer": scorer,
         "folds": folds,
-        "validation": "stratified_candidate_pair_cross_validation",
+        "validation": validation_name,
         "amazon_records": sum(record["source"] == "amazon" for record in dataset.records),
         "google_records": sum(record["source"] == "google" for record in dataset.records),
         "gold_matches": len(dataset.gold_pairs),
@@ -351,10 +399,7 @@ def cross_validate(
         "f1_mean": mean("f1"),
         "f1_std": std("f1"),
         "fold_results": rows,
-        "note": (
-            "Candidate-pair cross-validation validates the learned reranker on held-out candidate pairs. "
-            "A future paper-grade benchmark should also add entity-disjoint or dataset-level splits."
-        ),
+        "note": note,
     }
 
 
@@ -541,6 +586,7 @@ if __name__ == "__main__":
     parser.add_argument("--use-llm", action="store_true")
     parser.add_argument("--cross-validate", action="store_true", help="Run stratified candidate-pair cross-validation.")
     parser.add_argument("--folds", type=int, default=5)
+    parser.add_argument("--validation", choices=["pair", "entity"], default="pair")
     parser.add_argument("--provider", default="openai")
     parser.add_argument("--model", default="gpt-4o-mini")
     parser.add_argument("--review-min", type=float, default=0.55)
@@ -549,9 +595,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.cross_validate:
-        metrics = cross_validate(scorer=args.scorer, folds=args.folds)
+        metrics = cross_validate(scorer=args.scorer, folds=args.folds, validation=args.validation)
         REPORTS_DIR.mkdir(parents=True, exist_ok=True)
-        report_path = REPORTS_DIR / "amazon_google_cross_validation.json"
+        report_path = REPORTS_DIR / f"amazon_google_{args.validation}_cross_validation.json"
         report_path.write_text(json.dumps(metrics, indent=2), encoding="utf-8")
         metrics["output_path"] = str(report_path.relative_to(ROOT))
     else:
