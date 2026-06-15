@@ -32,6 +32,13 @@ flowchart LR
   API --> SEARCH[OpenSearch]
 ```
 
+Technical docs:
+
+- [Architecture](docs/ARCHITECTURE.md)
+- [Low-Level Design](docs/LLD.md)
+- [Scalability Design](docs/scalability.md)
+- [Research Workspace](docs/research_workspace.md)
+
 ## Quickstart
 
 ```bash

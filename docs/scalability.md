@@ -2,6 +2,27 @@
 
 OpenMatchER is designed around separable execution engines and deterministic matching primitives so the same matching semantics can run locally, in workers, or on Spark.
 
+## Scaling Flow
+
+```mermaid
+flowchart TD
+  A[Raw Records] --> B[Normalize Fields]
+  B --> C[Compute Blocking Keys]
+  C --> D[Partition by Blocking Key]
+  D --> E[Generate Candidate Pairs]
+  E --> F[Prune Oversized Buckets]
+  F --> G[Score Cheap Features]
+  G --> H[Apply Thresholds]
+  H --> I[Route Uncertain Pairs]
+  I --> J[LLM or Human Review]
+  H --> K[Accepted Match Edges]
+  J --> K
+  K --> L[Distributed Clustering]
+  L --> M[Metrics + Export Artifacts]
+```
+
+The scaling principle is to make candidate generation narrow before any expensive scoring or LLM adjudication happens. The system should never intentionally score every possible pair for large datasets.
+
 ## Local Benchmark Harness
 
 Run the benchmark suite with:
@@ -49,6 +70,15 @@ Current report fields:
 - Emit audit trails and summaries rather than loading all pair evidence in memory.
 
 ## Shuffle Reduction
+
+```mermaid
+flowchart LR
+  Hot[Hot Blocking Bucket] --> Detect[Detect high cardinality]
+  Detect --> Split[Secondary split: token, manufacturer, year, numeric signature]
+  Split --> Narrow[Narrow candidate payload]
+  Narrow --> Score[Feature scoring]
+  Score --> Persist[Persist pair IDs + feature vectors]
+```
 
 - Precompute normalized fields.
 - Use broadcast joins only for small reference sets.

@@ -2,6 +2,23 @@
 
 OpenAPI documentation is generated automatically at `/docs`.
 
+## API Flow
+
+```mermaid
+flowchart TD
+  A[Frontend Action] --> B[FastAPI Route]
+  B --> C{Validate Request}
+  C -->|invalid| D[HTTP 4xx]
+  C -->|valid| E[Service Layer]
+  E --> F[Domain Models]
+  E --> G[Matching/LLM Package]
+  F --> H[(Database)]
+  G --> I[Run Metrics/Results]
+  I --> H
+  H --> J[Response Schema]
+  J --> K[Frontend State Refresh]
+```
+
 ## Core endpoints
 
 - `GET /api/health`
@@ -32,6 +49,27 @@ OpenAPI documentation is generated automatically at `/docs`.
   "llm_review_min_score": 0.7,
   "llm_review_max_score": 0.88
 }
+```
+
+## Run Lifecycle
+
+```mermaid
+sequenceDiagram
+  participant UI as Frontend
+  participant API as FastAPI
+  participant DB as Database
+  participant SVC as Resolution Service
+  participant Core as Matching Core
+
+  UI->>API: POST /api/projects/{project_id}/runs
+  API->>DB: Validate project and dataset
+  API->>DB: Insert ResolutionRun
+  API->>SVC: execute_run
+  SVC->>DB: status=running
+  SVC->>Core: run_resolution
+  Core-->>SVC: matches, clusters, metrics
+  SVC->>DB: status=completed, persist results
+  API-->>UI: RunRead
 ```
 
 ## Match response shape
