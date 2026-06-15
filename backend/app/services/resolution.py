@@ -11,6 +11,54 @@ from openmatcher_matching import MatchingConfig, run_resolution
 from openmatcher_matching.clustering import connected_components
 
 
+def _f1(precision: float, recall: float) -> float:
+    return 2 * precision * recall / (precision + recall) if precision + recall else 0.0
+
+
+def evaluate_against_canonical_labels(result: dict, threshold: float) -> dict | None:
+    records = result.get("records", [])
+    if not records or not all("canonical_id" in record for record in records):
+        return None
+
+    gold_pairs: set[tuple[int, int]] = set()
+    labels: dict[str, list[int]] = {}
+    for index, record in enumerate(records):
+        canonical_id = str(record.get("canonical_id", "")).strip()
+        if not canonical_id:
+            continue
+        labels.setdefault(canonical_id, []).append(index)
+
+    for indices in labels.values():
+        for left_position, left in enumerate(indices):
+            for right in indices[left_position + 1 :]:
+                gold_pairs.add(tuple(sorted((left, right))))
+
+    predicted_pairs = {
+        tuple(sorted((match["left_index"], match["right_index"])))
+        for match in result.get("matches", [])
+        if match.get("final_score", 0.0) >= threshold
+    }
+    total_pairs = len(records) * (len(records) - 1) // 2
+    true_positive = len(predicted_pairs & gold_pairs)
+    false_positive = len(predicted_pairs - gold_pairs)
+    false_negative = len(gold_pairs - predicted_pairs)
+    true_negative = total_pairs - true_positive - false_positive - false_negative
+    precision = true_positive / len(predicted_pairs) if predicted_pairs else 0.0
+    recall = true_positive / len(gold_pairs) if gold_pairs else 0.0
+    return {
+        "label_column": "canonical_id",
+        "gold_pairs": len(gold_pairs),
+        "predicted_pairs": len(predicted_pairs),
+        "true_positive": true_positive,
+        "false_positive": false_positive,
+        "false_negative": false_negative,
+        "true_negative": true_negative,
+        "precision": round(precision, 4),
+        "recall": round(recall, 4),
+        "f1": round(_f1(precision, recall), 4),
+    }
+
+
 def _llm_adjusted_score(match: bool, confidence: float) -> float:
     return confidence if match else 1 - confidence
 
@@ -102,6 +150,9 @@ async def execute_run(
         else:
             result["metrics"]["llm_reviewed_count"] = 0
             result["metrics"]["llm_match_count"] = 0
+        evaluation = evaluate_against_canonical_labels(result, threshold)
+        if evaluation:
+            result["metrics"]["evaluation"] = evaluation
         run.results = result
         run.metrics = result["metrics"]
         run.status = RunStatus.completed

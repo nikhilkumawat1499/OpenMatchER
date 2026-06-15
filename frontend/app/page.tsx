@@ -7,6 +7,20 @@ import { Button, Input, Panel, Select } from "@/components/ui";
 
 const pipelineNodes = ["Data Load", "Normalize", "Block", "Embed", "Similarity", "LLM Review", "Cluster", "Export"];
 
+function metricNumber(metrics: Record<string, unknown>, key: string, fallback = 0) {
+  const value = metrics[key];
+  return typeof value === "number" ? value : fallback;
+}
+
+function formatMetric(value: unknown, digits = 4) {
+  return typeof value === "number" ? value.toFixed(digits) : "N/A";
+}
+
+function evaluationMetrics(metrics: Record<string, unknown>) {
+  const evaluation = metrics.evaluation;
+  return evaluation && typeof evaluation === "object" ? evaluation as Record<string, unknown> : undefined;
+}
+
 export default function Home() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState("");
@@ -31,6 +45,7 @@ export default function Home() {
   const selectedDataset = datasets.find((dataset) => dataset.id === selectedDatasetId);
   const latestRun = runs[0];
   const metrics = latestRun?.metrics ?? {};
+  const evaluation = evaluationMetrics(metrics);
 
   async function refresh(projectId?: string) {
     const nextProjects = await api.projects();
@@ -214,7 +229,7 @@ export default function Home() {
               ["Projects", projects.length],
               ["Datasets", datasets.length],
               ["Runs", runs.length],
-              ["Clusters", metrics.cluster_count ?? 0]
+              ["Clusters", metricNumber(metrics, "cluster_count")]
             ].map(([label, value]) => (
               <Panel key={label as string}>
                 <div className="text-sm text-slate-500">{label}</div>
@@ -301,7 +316,70 @@ export default function Home() {
           </div>
 
           <Panel className="overflow-x-auto">
-            <h2 className="mb-3 text-lg font-semibold">Benchmark Leaderboard</h2>
+            <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+              <div>
+                <h2 className="text-lg font-semibold">Latest Dataset Result</h2>
+                <p className="text-sm text-slate-600">
+                  {evaluation
+                    ? `Evaluated against ${evaluation.label_column} labels from ${selectedDataset?.filename ?? "the uploaded dataset"}.`
+                    : "Run metrics from the currently selected uploaded dataset."}
+                </p>
+              </div>
+              <div className="text-sm text-slate-600">{latestRun ? latestRun.status : "No run yet"}</div>
+            </div>
+            {evaluation ? (
+              <table className="mb-6 w-full min-w-[520px] text-left text-sm">
+                <thead>
+                  <tr>
+                    <th className="border-b p-2">Dataset</th>
+                    <th className="border-b p-2">Precision</th>
+                    <th className="border-b p-2">Recall</th>
+                    <th className="border-b p-2">F1</th>
+                    <th className="border-b p-2">TP</th>
+                    <th className="border-b p-2">FP</th>
+                    <th className="border-b p-2">FN</th>
+                    <th className="border-b p-2">Gold Pairs</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="border-b p-2 font-medium">{selectedDataset?.filename ?? "Selected dataset"}</td>
+                    <td className="border-b p-2">{formatMetric(evaluation.precision)}</td>
+                    <td className="border-b p-2">{formatMetric(evaluation.recall)}</td>
+                    <td className="border-b p-2">{formatMetric(evaluation.f1)}</td>
+                    <td className="border-b p-2">{String(evaluation.true_positive ?? "N/A")}</td>
+                    <td className="border-b p-2">{String(evaluation.false_positive ?? "N/A")}</td>
+                    <td className="border-b p-2">{String(evaluation.false_negative ?? "N/A")}</td>
+                    <td className="border-b p-2">{String(evaluation.gold_pairs ?? "N/A")}</td>
+                  </tr>
+                </tbody>
+              </table>
+            ) : (
+              <table className="mb-6 w-full min-w-[520px] text-left text-sm">
+                <thead>
+                  <tr>
+                    <th className="border-b p-2">Dataset</th>
+                    <th className="border-b p-2">Records</th>
+                    <th className="border-b p-2">Candidate Pairs</th>
+                    <th className="border-b p-2">Matches</th>
+                    <th className="border-b p-2">Clusters</th>
+                    <th className="border-b p-2">Average Score</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td className="border-b p-2 font-medium">{selectedDataset?.filename ?? "Selected dataset"}</td>
+                    <td className="border-b p-2">{metricNumber(metrics, "record_count")}</td>
+                    <td className="border-b p-2">{metricNumber(metrics, "candidate_pairs")}</td>
+                    <td className="border-b p-2">{metricNumber(metrics, "match_count")}</td>
+                    <td className="border-b p-2">{metricNumber(metrics, "cluster_count")}</td>
+                    <td className="border-b p-2">{formatMetric(metrics.average_score)}</td>
+                  </tr>
+                </tbody>
+              </table>
+            )}
+
+            <h2 className="mb-3 text-lg font-semibold">Demo Benchmark Baseline</h2>
             <table className="w-full min-w-[520px] text-left text-sm">
               <thead>
                 <tr>

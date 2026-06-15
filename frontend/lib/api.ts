@@ -23,7 +23,7 @@ export type Run = {
   dataset_id: string;
   status: string;
   progress: number;
-  metrics: Record<string, number>;
+  metrics: Record<string, unknown>;
   results: {
     matches?: Array<{
       left_index: number;
