@@ -9,7 +9,7 @@ pyarrow==18.1.0
 cryptography==44.0.0
 slowapi==0.1.9
 rapidfuzz==3.11.0
-scikit-learn==1.6.0
+scikit-learn==1.9.0
 networkx==3.4.2
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
