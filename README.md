@@ -99,6 +99,19 @@ Current local benchmark snapshot:
 
 These demo datasets are intentionally small and reproducible; the point is to show the progression from conservative string matching to semantic and LLM-assisted matching, not to claim a universal production score.
 
+Amazon-GoogleProducts benchmark:
+
+```bash
+PYTHONPATH=backend:matching:pipelines:llm:embeddings \
+  python examples/run_amazon_google_products.py --scorer llm_hybrid --threshold 0.93
+```
+
+Current tuned result on the local Amazon-GoogleProducts folder:
+
+| Dataset | Method | Predicted Pairs | Precision | Recall | F1 |
+| --- | --- | ---: | ---: | ---: | ---: |
+| Amazon-GoogleProducts | LLM Hybrid reranker | 990 | 1.0000 | 0.7615 | 0.8646 |
+
 ## Candidate Generation
 
 OpenMatchER avoids treating entity resolution as a raw O(N²) scoring problem. The matching roadmap separates candidate generation from scoring:

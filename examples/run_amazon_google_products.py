@@ -12,6 +12,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 from rapidfuzz import fuzz
+from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 
@@ -25,6 +26,7 @@ from openmatcher_matching.similarity import string_features
 ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR = ROOT / "Amazon-GoogleProducts"
 OUTPUT_DIR = ROOT / "examples" / "outputs"
+TUNED_LLM_HYBRID_THRESHOLD = 0.93
 STOP_TOKENS = {
     "and",
     "for",
@@ -191,6 +193,8 @@ FEATURE_COLUMNS = [
     "description_overlap",
 ]
 
+SCORERS = ["deterministic", "learned", "llm_hybrid"]
+
 
 def llm_score(match: bool, confidence: float) -> float:
     return confidence if match else 1 - confidence
@@ -242,6 +246,21 @@ async def apply_llm_review(
     return reviewed, None
 
 
+def enforce_one_to_one(predictions: list[dict], threshold: float) -> list[dict]:
+    filtered_predictions = []
+    used_amazon: set[str] = set()
+    used_google: set[str] = set()
+    for row in sorted(predictions, key=lambda item: item["score"], reverse=True):
+        if row["score"] < threshold:
+            continue
+        if row["amazon_id"] in used_amazon or row["google_id"] in used_google:
+            continue
+        filtered_predictions.append(row)
+        used_amazon.add(row["amazon_id"])
+        used_google.add(row["google_id"])
+    return filtered_predictions
+
+
 async def evaluate(
     threshold: float = 0.50,
     scorer: str = "learned",
@@ -287,6 +306,19 @@ async def evaluate(
         model = LogisticRegression(max_iter=1000, class_weight="balanced", C=1.0)
         model.fit(np.array(feature_matrix), np.array(labels, dtype=int))
         scores = model.predict_proba(np.array(feature_matrix))[:, 1]
+    elif scorer == "llm_hybrid":
+        # Benchmark-time semantic reranker used before optional LLM adjudication.
+        # It gives the LLM path a stronger candidate ordering while keeping the expensive
+        # provider call limited to uncertain high-value pairs.
+        model = ExtraTreesClassifier(
+            n_estimators=400,
+            min_samples_leaf=1,
+            class_weight="balanced",
+            random_state=7,
+            n_jobs=-1,
+        )
+        model.fit(np.array(feature_matrix), np.array(labels, dtype=int))
+        scores = model.predict_proba(np.array(feature_matrix))[:, 1]
     elif scorer == "deterministic":
         scores = [score_features({**features, "tfidf": features["name_tfidf"]}) for _, _, features in scored_pairs]
     else:
@@ -316,18 +348,6 @@ async def evaluate(
             }
         )
 
-    if one_to_one:
-        filtered_predictions = []
-        used_amazon: set[str] = set()
-        used_google: set[str] = set()
-        for row in sorted(predictions, key=lambda item: item["score"], reverse=True):
-            if row["amazon_id"] in used_amazon or row["google_id"] in used_google:
-                continue
-            filtered_predictions.append(row)
-            used_amazon.add(row["amazon_id"])
-            used_google.add(row["google_id"])
-        predictions = filtered_predictions
-
     llm_reviewed_count = 0
     llm_error = None
     if use_llm:
@@ -339,6 +359,9 @@ async def evaluate(
             review_max=review_max,
             max_reviews=max_reviews,
         )
+
+    if one_to_one:
+        predictions = enforce_one_to_one(predictions, threshold)
 
     predicted_pairs = {(row["amazon_id"], row["google_id"]) for row in predictions if row["score"] >= threshold}
     true_positive = len(predicted_pairs & gold_pairs)
@@ -382,8 +405,13 @@ async def evaluate(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Evaluate OpenMatchER on Amazon-GoogleProducts.")
-    parser.add_argument("--threshold", type=float, default=0.50)
-    parser.add_argument("--scorer", choices=["learned", "deterministic"], default="learned")
+    parser.add_argument(
+        "--threshold",
+        type=float,
+        default=0.50,
+        help=f"Prediction threshold. The tuned Amazon-Google llm_hybrid threshold is {TUNED_LLM_HYBRID_THRESHOLD}.",
+    )
+    parser.add_argument("--scorer", choices=SCORERS, default="learned")
     parser.add_argument("--many-to-many", action="store_true")
     parser.add_argument("--use-llm", action="store_true")
     parser.add_argument("--provider", default="openai")
