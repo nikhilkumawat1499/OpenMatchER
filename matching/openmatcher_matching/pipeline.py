@@ -42,6 +42,7 @@ def run_resolution(records: list[dict], config: MatchingConfig) -> dict:
         features = string_features(values[left], values[right])
         features["tfidf"] = tfidf.get((left, right), 0.0)
         final_score = round(score_features(features), 4)
+        contributions = {key: round(value, 4) for key, value in features.items()}
         matches.append(
             {
                 "left_index": left,
@@ -49,8 +50,10 @@ def run_resolution(records: list[dict], config: MatchingConfig) -> dict:
                 "entity_a": records[left],
                 "entity_b": records[right],
                 "final_score": final_score,
-                "contributing_features": {key: round(value, 4) for key, value in features.items()},
+                "feature_contributions": contributions,
+                "contributing_features": contributions,
                 "reasoning": f"Weighted deterministic score from {len(features)} similarity features.",
+                "decision_source": "hybrid_model",
             }
         )
     clusters = connected_components(len(records), matches, config.threshold)
@@ -69,4 +72,3 @@ def run_resolution(records: list[dict], config: MatchingConfig) -> dict:
             "average_score": round(mean([m["final_score"] for m in matches]), 4) if matches else 0.0,
         },
     }
-

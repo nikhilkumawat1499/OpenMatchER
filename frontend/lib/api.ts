@@ -36,6 +36,17 @@ export type Run = {
   };
 };
 
+export type LeaderboardRow = {
+  model: string;
+  precision: number;
+  recall: number;
+  f1: number;
+  micro_precision?: number;
+  micro_recall?: number;
+  micro_f1?: number;
+  macro_f1?: number;
+};
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(`${API_BASE}${path}`, {
     ...init,
@@ -61,6 +72,7 @@ async function responseError(response: Response): Promise<Error> {
 
 export const api = {
   health: () => request<{ status: string }>("/api/health"),
+  leaderboard: () => request<LeaderboardRow[]>("/api/leaderboard"),
   projects: () => request<Project[]>("/api/projects"),
   createProject: (payload: { name: string; entity_type: string; description?: string }) =>
     request<Project>("/api/projects", { method: "POST", body: JSON.stringify(payload) }),

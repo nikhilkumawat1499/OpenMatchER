@@ -1,0 +1,14 @@
+id,name,canonical_id
+p1,John A Smith,john_smith
+p2,Jon Smith,john_smith
+p3,J. Smith,john_smith
+p4,Jane Marie Doe,jane_doe
+p5,J M Doe,jane_doe
+p6,Jane Doe,jane_doe
+p7,Rahul Kumar,rahul_kumar
+p8,Rahul K,rahul_kumar
+p9,Rahul Kumaar,rahul_kumar
+p10,Sofia Garcia,sofia_garcia
+p11,Sophia Garcia,sofia_garcia
+p12,S Garcia,sofia_garcia
+

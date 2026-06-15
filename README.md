@@ -1,48 +1,128 @@
 # OpenMatchER
 
-OpenMatchER is an open-source entity resolution and name matching platform for uploading datasets, configuring matching schemas, running deterministic and LLM-assisted pipelines, reviewing clusters, and exporting match results.
+OpenMatchER is an open-source entity resolution and name matching platform for teams that need to upload messy datasets, configure matching strategies, run explainable pipelines, review clusters, and export trusted match results.
 
-## What is included
+It is designed to demonstrate serious entity-resolution engineering: deterministic matching, LLM-assisted adjudication, dataset versioning, experiment tracking, benchmarking, and future-ready distributed execution.
 
-- FastAPI backend with SQLAlchemy models, upload APIs, encrypted provider secret storage, and OpenAPI docs.
-- Next.js frontend for project setup, dataset upload, schema selection, pipeline execution, metrics, and cluster review.
-- Matching engine with normalization, prefix/phonetic/n-gram/token blocking, string and TF-IDF similarity, explainable scoring, and connected-component clustering.
-- Pluggable LLM provider interface for OpenAI-compatible providers, Anthropic, Gemini, Ollama, and OpenRouter.
-- Docker Compose stack for frontend, backend, PostgreSQL, Redis, and OpenSearch.
-- Tests, CI workflows, CodeQL, Dependabot, pre-commit, docs, and sample data.
+## Why OpenMatchER
 
-## Local development
+- **Entity resolution workbench:** projects, datasets, schema selection, runs, metrics, review, and export.
+- **Explainable matching:** normalized evidence, similarity features, final score, reasoning, and decision source.
+- **LLM-assisted review:** encrypted provider keys, provider abstraction, structured JSON validation, risk level, and bounded uncertain-pair routing.
+- **Benchmark-first development:** demo datasets, precision/recall/F1, false positives/negatives, runtime, memory, JSON and HTML reports.
+- **Execution abstraction:** local engine today, Spark adapter for distributed candidate generation and scoring.
+- **Open-source ready:** Docker Compose, CI, CodeQL, Dependabot, issue templates, roadmap, security docs, and Apache 2.0 license.
 
-```bash
-docker compose up --build
+## Architecture
+
+```mermaid
+flowchart LR
+  UI[Next.js UI] --> API[FastAPI Backend]
+  API --> DB[(PostgreSQL)]
+  API --> FS[Local/Object Storage]
+  API --> ER[Matching Engine]
+  ER --> LOCAL[Local Engine]
+  ER --> SPARK[Spark Engine Adapter]
+  API --> LLM[LLM Provider Abstraction]
+  LLM --> OPENAI[OpenAI]
+  LLM --> ANTHROPIC[Anthropic]
+  LLM --> GEMINI[Gemini]
+  LLM --> OLLAMA[Ollama]
+  API --> WORKER[Worker]
+  API --> SEARCH[OpenSearch]
 ```
 
-Frontend: http://localhost:3000
-
-Backend API: http://localhost:8000/docs
-
-Python-only smoke test:
+## Quickstart
 
 ```bash
-PYTHONPATH=backend:matching:pipelines:llm:embeddings pytest
+docker compose up
 ```
 
-## Repository layout
+Then open:
+
+- Frontend: http://localhost:3000
+- Backend API docs: http://localhost:8000/docs
+
+Local developer commands:
+
+```bash
+make start
+make stop
+make test
+make lint
+make format
+make benchmark
+```
+
+## Demo Workflow
+
+1. Create a project.
+2. Upload one of the demo datasets in `examples/`.
+3. Select `name` as the matching column.
+4. Run the resolution pipeline.
+5. Review clusters and feature explanations.
+6. Download CSV results.
+
+Demo datasets include companies, people, universities, and products with duplicates, misspellings, aliases, and abbreviations.
+
+## Benchmarks
+
+Run:
+
+```bash
+PYTHONPATH=backend:matching:pipelines:llm:embeddings python benchmarks/run_benchmarks.py
+```
+
+Outputs:
+
+- `reports/benchmark_results.json`
+- `reports/benchmark_results.html`
+- `reports/precision_recall_curve.png`
+- `reports/roc_curve.png`
+- `reports/confusion_matrix.png`
+- `reports/scalability_results.json`
+
+The benchmark runner evaluates Levenshtein, Jaro-Winkler, TF-IDF, embeddings, hybrid scoring, and LLM hybrid scoring across the demo company, people, university, and product datasets. The report includes micro/macro precision, recall, F1, runtime, memory, false positives, false negatives, PR/ROC curves, and a confusion matrix for the top model.
+
+The scalability section runs a synthetic blocking/count workload at 1K, 10K, 100K, and 1M records for both the local engine path and Spark `local[*]`. Spark benchmarks require Java and `pyspark`; if Spark cannot start in the current environment, the report marks those rows as skipped instead of projecting numbers.
+
+## Screenshots
+
+Screenshots are intentionally not checked in yet. The first stable public release should include:
+
+- Dashboard and project setup.
+- Dataset upload and preview.
+- Pipeline configuration.
+- Cluster review.
+- Benchmark leaderboard.
+
+## Repository Layout
 
 ```text
-backend/          FastAPI service and SQLAlchemy schema
-frontend/         Next.js application
-matching/         Entity resolution engine
-embeddings/       Sentence Transformer abstraction
-llm/              Provider abstraction and structured adjudication
-pipelines/        Configurable pipeline runner
-datasets/         Sample datasets
-docs/             Architecture, security, deployment, and API docs
-docker/           Container images
-tests/            Backend and matching tests
+backend/       FastAPI API, SQLAlchemy models, services
+frontend/      Next.js TypeScript UI
+matching/      Normalization, blocking, similarity, clustering, engines
+llm/           LLM provider abstraction and structured adjudication
+embeddings/    Sentence Transformer adapter
+pipelines/     Configurable pipeline runner
+benchmarks/    Benchmark runner and report generation
+examples/      Demo datasets and benchmark scripts
+docs/          Architecture, deployment, security, scalability, research docs
+docker/        Container images
+tests/         Unit and API tests
 ```
 
-## Status
+## Roadmap
 
-This is a production-oriented first release scaffold. The deterministic ER path is implemented end to end locally. Large-scale distributed execution, Spark runners, model registry integration, and advanced human review workflows are designed as extension points.
+- RBAC and multi-tenant authorization.
+- Persisted human review queues and active learning.
+- Object storage adapters for S3, GCS, and Azure Blob.
+- Full Spark-native candidate generation and clustering.
+- Model registry and experiment comparison UI.
+- Pluggable embedding retrieval and OpenSearch candidate retrieval.
 
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md), [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md), and [SECURITY.md](SECURITY.md).
+
+OpenMatchER is Apache 2.0 licensed.

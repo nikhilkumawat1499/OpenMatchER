@@ -6,6 +6,7 @@ sqlalchemy==2.0.36
 python-multipart==0.0.20
 pandas==2.2.3
 pyarrow==18.1.0
+pyspark==4.1.2
 cryptography==44.0.0
 slowapi==0.1.9
 rapidfuzz==3.11.0
@@ -16,4 +17,4 @@ passlib[bcrypt]==1.7.4
 httpx==0.28.1
 pytest==8.3.4
 pytest-cov==6.0.0
-
+ruff==0.8.4

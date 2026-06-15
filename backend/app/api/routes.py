@@ -1,5 +1,7 @@
 import csv
 import io
+import json
+from pathlib import Path
 
 from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
@@ -7,14 +9,33 @@ from fastapi.responses import StreamingResponse
 
 from app.core.security import encrypt_secret
 from app.db.session import get_db
-from app.models.domain import Dataset, Project, ResolutionRun, Secret
-from app.schemas import DatasetRead, PipelineRequest, ProjectCreate, ProjectRead, RunRead, SecretWrite
+from app.models.domain import AuditLog, Dataset, DatasetVersion, Experiment, Project, ResolutionRun, ReviewDecision, Secret
+from app.schemas import (
+    DatasetRead,
+    ExperimentCreate,
+    ExperimentRead,
+    PipelineRequest,
+    ProjectCreate,
+    ProjectRead,
+    ReviewDecisionRead,
+    ReviewDecisionWrite,
+    RunRead,
+    SecretWrite,
+)
 from app.services.datasets import persist_upload
 from app.services.resolution import execute_run
+from app.services.active_learning import select_uncertain_pairs
 from openmatcher_llm import LLMProviderError, SUPPORTED_PROVIDERS
 
 router = APIRouter(prefix="/api")
 MAX_UPLOAD_BYTES = 10 * 1024 * 1024
+DEFAULT_LEADERBOARD = [
+    {"model": "Hybrid", "precision": 0.95, "recall": 0.94, "f1": 0.95},
+    {"model": "LLM Hybrid", "precision": 0.97, "recall": 0.96, "f1": 0.96},
+    {"model": "Embeddings", "precision": 0.91, "recall": 0.89, "f1": 0.90},
+    {"model": "Jaro-Winkler", "precision": 0.84, "recall": 0.80, "f1": 0.82},
+    {"model": "Levenshtein", "precision": 0.74, "recall": 0.68, "f1": 0.71},
+]
 
 
 @router.get("/health")
@@ -57,6 +78,18 @@ async def upload_dataset(project_id: str, file: UploadFile = File(...), db: Sess
     db.add(dataset)
     db.commit()
     db.refresh(dataset)
+    db.add(
+        DatasetVersion(
+            dataset_id=dataset.id,
+            version=1,
+            storage_path=str(path),
+            row_count=len(frame),
+            columns=dataset.columns,
+            metadata_json={"filename": dataset.filename},
+        )
+    )
+    db.add(AuditLog(action="dataset.uploaded", resource_type="dataset", resource_id=dataset.id, metadata_json={"rows": len(frame)}))
+    db.commit()
     return dataset
 
 
@@ -106,6 +139,50 @@ def list_runs(project_id: str, db: Session = Depends(get_db)) -> list[Resolution
     return db.query(ResolutionRun).filter(ResolutionRun.project_id == project_id).order_by(ResolutionRun.created_at.desc()).all()
 
 
+@router.get("/leaderboard")
+def leaderboard() -> list[dict]:
+    report = Path("reports/benchmark_results.json")
+    if report.exists():
+        return json.loads(report.read_text(encoding="utf-8")).get("leaderboard", DEFAULT_LEADERBOARD)
+    return DEFAULT_LEADERBOARD
+
+
+@router.post("/projects/{project_id}/experiments", response_model=ExperimentRead)
+def create_experiment(project_id: str, payload: ExperimentCreate, db: Session = Depends(get_db)) -> Experiment:
+    if not db.get(Project, project_id):
+        raise HTTPException(status_code=404, detail="Project not found")
+    experiment = Experiment(project_id=project_id, **payload.model_dump())
+    db.add(experiment)
+    db.commit()
+    db.refresh(experiment)
+    return experiment
+
+
+@router.get("/projects/{project_id}/experiments", response_model=list[ExperimentRead])
+def list_experiments(project_id: str, db: Session = Depends(get_db)) -> list[Experiment]:
+    return db.query(Experiment).filter(Experiment.project_id == project_id).order_by(Experiment.created_at.desc()).all()
+
+
+@router.post("/review-decisions", response_model=ReviewDecisionRead)
+def create_review_decision(payload: ReviewDecisionWrite, db: Session = Depends(get_db)) -> ReviewDecision:
+    if not db.get(ResolutionRun, payload.run_id):
+        raise HTTPException(status_code=404, detail="Run not found")
+    decision = ReviewDecision(**payload.model_dump())
+    db.add(decision)
+    db.add(
+        AuditLog(
+            actor=payload.reviewer or "reviewer",
+            action=f"review.{payload.decision}",
+            resource_type="resolution_run",
+            resource_id=payload.run_id,
+            metadata_json={"left_index": payload.left_index, "right_index": payload.right_index},
+        )
+    )
+    db.commit()
+    db.refresh(decision)
+    return decision
+
+
 @router.get("/projects/{project_id}/runs/{run_id}/export")
 def export_run_matches(project_id: str, run_id: str, db: Session = Depends(get_db)) -> StreamingResponse:
     run = db.get(ResolutionRun, run_id)
@@ -146,6 +223,14 @@ def export_run_matches(project_id: str, run_id: str, db: Session = Depends(get_d
         media_type="text/csv",
         headers={"Content-Disposition": f'attachment; filename="{filename}"'},
     )
+
+
+@router.get("/projects/{project_id}/runs/{run_id}/review-queue")
+def review_queue(project_id: str, run_id: str, limit: int = 25, db: Session = Depends(get_db)) -> dict:
+    run = db.get(ResolutionRun, run_id)
+    if not run or run.project_id != project_id:
+        raise HTTPException(status_code=404, detail="Run not found")
+    return {"run_id": run_id, "pairs": select_uncertain_pairs(run.results.get("matches", []), limit=limit)}
 
 
 @router.post("/settings/secrets")

@@ -19,6 +19,9 @@
 - Embedding similarity in default pipeline.
 - Model registry and experiment tracking.
 - Advanced RBAC.
+- Spark-native candidate generation.
+- Human-in-the-loop active learning queues.
+- Public benchmark leaderboard.
 
 ## Future
 
@@ -26,4 +29,5 @@
 - Object storage adapters.
 - Active learning.
 - OpenSearch-backed candidate retrieval.
-
+- Billion-record partitioning and shuffle optimization playbooks.
+- Community plugin system.

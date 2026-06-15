@@ -16,6 +16,7 @@ jobs:
           python-version: "3.12"
       - run: pip install -r backend/requirements.txt
       - run: PYTHONPATH=backend:matching:pipelines:llm:embeddings pytest --cov
+      - run: PYTHONPATH=backend:matching:pipelines:llm:embeddings python benchmarks/run_benchmarks.py
 
   frontend:
     runs-on: ubuntu-latest
@@ -37,3 +38,12 @@ jobs:
       - run: docker build -f docker/backend.Dockerfile .
       - run: docker build -f docker/frontend.Dockerfile .
 
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          ignore-unfixed: true
+          severity: CRITICAL,HIGH

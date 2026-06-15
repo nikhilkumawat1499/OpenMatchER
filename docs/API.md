@@ -12,6 +12,12 @@ OpenAPI documentation is generated automatically at `/docs`.
 - `POST /api/projects/{project_id}/runs`
 - `GET /api/projects/{project_id}/runs`
 - `POST /api/settings/secrets`
+- `GET /api/leaderboard`
+- `POST /api/projects/{project_id}/experiments`
+- `GET /api/projects/{project_id}/experiments`
+- `POST /api/review-decisions`
+- `GET /api/projects/{project_id}/runs/{run_id}/review-queue`
+- `GET /api/projects/{project_id}/runs/{run_id}/export`
 
 ## Run request
 

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Activity, BrainCircuit, Database, Download, GitBranch, KeyRound, Play, Plus, Save, Upload } from "lucide-react";
-import { api, Dataset, MAX_UPLOAD_BYTES, Project, Run } from "@/lib/api";
+import { api, Dataset, LeaderboardRow, MAX_UPLOAD_BYTES, Project, Run } from "@/lib/api";
 import { Button, Input, Panel, Select } from "@/components/ui";
 
 const pipelineNodes = ["Data Load", "Normalize", "Block", "Embed", "Similarity", "LLM Review", "Cluster", "Export"];
@@ -12,6 +12,7 @@ export default function Home() {
   const [selectedProjectId, setSelectedProjectId] = useState("");
   const [datasets, setDatasets] = useState<Dataset[]>([]);
   const [runs, setRuns] = useState<Run[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardRow[]>([]);
   const [projectName, setProjectName] = useState("Customer Entity Resolution");
   const [entityType, setEntityType] = useState("company");
   const [selectedDatasetId, setSelectedDatasetId] = useState("");
@@ -48,6 +49,7 @@ export default function Home() {
 
   useEffect(() => {
     refresh().catch((err) => setError(err.message));
+    api.leaderboard().then(setLeaderboard).catch((err) => setError(err.message));
   }, []);
 
   useEffect(() => {
@@ -297,6 +299,32 @@ export default function Home() {
               </div>
             </Panel>
           </div>
+
+          <Panel className="overflow-x-auto">
+            <h2 className="mb-3 text-lg font-semibold">Benchmark Leaderboard</h2>
+            <table className="w-full min-w-[520px] text-left text-sm">
+              <thead>
+                <tr>
+                  <th className="border-b p-2">Model</th>
+                  <th className="border-b p-2">Micro Precision</th>
+                  <th className="border-b p-2">Micro Recall</th>
+                  <th className="border-b p-2">Micro F1</th>
+                  <th className="border-b p-2">Macro F1</th>
+                </tr>
+              </thead>
+              <tbody>
+                {leaderboard.map((row) => (
+                  <tr key={row.model}>
+                    <td className="border-b p-2 font-medium">{row.model}</td>
+                    <td className="border-b p-2">{(row.micro_precision ?? row.precision).toFixed(4)}</td>
+                    <td className="border-b p-2">{(row.micro_recall ?? row.recall).toFixed(4)}</td>
+                    <td className="border-b p-2">{(row.micro_f1 ?? row.f1).toFixed(4)}</td>
+                    <td className="border-b p-2">{(row.macro_f1 ?? row.f1).toFixed(4)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Panel>
         </section>
       </div>
     </main>

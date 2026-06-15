@@ -7,10 +7,20 @@ services:
       POSTGRES_DB: openmatcher
     ports: ["5432:5432"]
     volumes: ["postgres-data:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U openmatcher -d openmatcher"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
     ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   opensearch:
     image: opensearchproject/opensearch:2.18.0
@@ -20,6 +30,11 @@ services:
       OPENSEARCH_INITIAL_ADMIN_PASSWORD: OpenMatcher123!
     ports: ["9200:9200"]
     volumes: ["opensearch-data:/usr/share/opensearch/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fs http://localhost:9200/_cluster/health || exit 1"]
+      interval: 20s
+      timeout: 10s
+      retries: 10
 
   backend:
     build:
@@ -30,7 +45,34 @@ services:
       OPENMATCHER_ALLOWED_ORIGINS: '["http://localhost:3000"]'
     ports: ["8000:8000"]
     volumes: ["./data:/app/data"]
-    depends_on: [postgres, redis, opensearch]
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      opensearch:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/api/health')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    command: ["python", "scripts/worker.py"]
+    environment:
+      OPENMATCHER_DATABASE_URL: postgresql+psycopg://openmatcher:openmatcher@postgres:5432/openmatcher
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /tmp/openmatcher-worker-heartbeat"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
 
   frontend:
     build:
@@ -39,9 +81,15 @@ services:
     environment:
       NEXT_PUBLIC_API_BASE: http://localhost:8000
     ports: ["3000:3000"]
-    depends_on: [backend]
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"fetch('http://localhost:3000').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   postgres-data:
   opensearch-data:
-

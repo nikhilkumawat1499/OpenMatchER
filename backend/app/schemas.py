@@ -47,6 +47,33 @@ class RunRead(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class ExperimentCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=160)
+    description: str | None = None
+
+
+class ExperimentRead(ExperimentCreate):
+    id: str
+    project_id: str
+
+    model_config = {"from_attributes": True}
+
+
+class ReviewDecisionWrite(BaseModel):
+    run_id: str
+    left_index: int
+    right_index: int
+    decision: str = Field(pattern="^(approve|reject|merge|split|flag)$")
+    reviewer: str | None = None
+    notes: str | None = None
+
+
+class ReviewDecisionRead(ReviewDecisionWrite):
+    id: str
+
+    model_config = {"from_attributes": True}
+
+
 class SecretWrite(BaseModel):
     provider: str
     api_key: str = Field(min_length=8)

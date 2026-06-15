@@ -1,0 +1,14 @@
+id,name,canonical_id
+u1,MIT,mit
+u2,Massachusetts Institute of Technology,mit
+u3,Mass Inst of Tech,mit
+u4,Stanford University,stanford
+u5,Stanford Univ,stanford
+u6,Leland Stanford Junior University,stanford
+u7,University of California Berkeley,uc_berkeley
+u8,UC Berkeley,uc_berkeley
+u9,Cal Berkeley,uc_berkeley
+u10,Oxford University,oxford
+u11,University of Oxford,oxford
+u12,Oxon,oxford
+

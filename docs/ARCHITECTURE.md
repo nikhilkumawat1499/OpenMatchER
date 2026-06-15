@@ -15,4 +15,5 @@ The frontend is a Next.js application that calls the backend directly. It provid
 - Embeddings: Sentence Transformers service with configurable HuggingFace model names.
 - LLM providers: implement one provider interface and register it by name.
 - Distributed execution: engine functions operate on records and configuration objects, making Spark or Ray adapters possible without changing API contracts.
-
+- Experiment tracking: datasets, versions, runs, metrics, artifacts, and review decisions are modeled separately for reproducibility.
+- Human review: review decisions and active-learning queues provide training feedback for future supervised models.

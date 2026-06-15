@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>OpenMatchER Benchmark Results</title>
+<style>body{font-family:Inter,Arial,sans-serif;margin:40px;color:#182026}table{border-collapse:collapse;width:100%}td,th{border:1px solid #ddd;padding:8px}th{background:#f5f7f4;text-align:left}</style></head>
+<body><h1>OpenMatchER Benchmark Results</h1><p>Generated offline from demo datasets.</p>
+<h2>Leaderboard</h2>
+<table><thead><tr><th>Model</th><th>Micro Precision</th><th>Micro Recall</th><th>Micro F1</th><th>Macro F1</th></tr></thead><tbody><tr><td>LLM Hybrid</td><td>0.8462</td><td>0.898</td><td>0.8713</td><td>0.8822</td></tr>
+<tr><td>Hybrid</td><td>0.7925</td><td>0.8571</td><td>0.8235</td><td>0.8407</td></tr>
+<tr><td>TF-IDF</td><td>0.7959</td><td>0.7959</td><td>0.7959</td><td>0.8083</td></tr>
+<tr><td>Embeddings</td><td>0.963</td><td>0.5306</td><td>0.6842</td><td>0.667</td></tr>
+<tr><td>Jaro-Winkler</td><td>0.9524</td><td>0.4082</td><td>0.5714</td><td>0.5509</td></tr>
+<tr><td>Levenshtein</td><td>0.9286</td><td>0.2653</td><td>0.4127</td><td>0.3996</td></tr></tbody></table>
+<h2>Curves</h2><p><a href="pr_curve.svg">Precision-Recall curve</a> · <a href="roc_curve.svg">ROC curve</a></p>
+<p><img src="precision_recall_curve.png" alt="Precision-Recall curve" width="360"> <img src="roc_curve.png" alt="ROC curve" width="360"> <img src="confusion_matrix.png" alt="Confusion matrix" width="300"></p>
+<h2>Runtime Benchmarks</h2>
+<table><thead><tr><th>Method</th><th>Total Runtime (s)</th><th>Average Runtime (s)</th><th>Peak Memory (MB)</th></tr></thead><tbody><tr><td>Levenshtein</td><td>0.0026</td><td>0.0006</td><td>0.0126</td></tr>
+<tr><td>Jaro-Winkler</td><td>0.0024</td><td>0.0006</td><td>0.0084</td></tr>
+<tr><td>TF-IDF</td><td>0.0484</td><td>0.0121</td><td>0.0882</td></tr>
+<tr><td>Embeddings</td><td>0.004</td><td>0.001</td><td>0.0098</td></tr>
+<tr><td>Hybrid</td><td>0.0521</td><td>0.013</td><td>0.0689</td></tr>
+<tr><td>LLM Hybrid</td><td>0.1039</td><td>0.026</td><td>0.0988</td></tr></tbody></table>
+<h2>Scalability Benchmarks</h2>
+<table><thead><tr><th>Engine</th><th>Records</th><th>Runtime (s)</th><th>Candidate Pairs</th><th>Mode</th><th>Notes</th></tr></thead><tbody><tr><td>Local Engine</td><td>1,000</td><td>0.0001</td><td>62,000</td><td>measured</td><td>Measured local synthetic blocking and grouped candidate-count pass.</td></tr>
+<tr><td>Spark Engine</td><td>1,000</td><td>1.4353</td><td>62,000</td><td>measured</td><td>Measured with Spark local[*] range, blocking, and grouped candidate-count pass.</td></tr>
+<tr><td>Local Engine</td><td>10,000</td><td>0.0008</td><td>6,245,000</td><td>measured</td><td>Measured local synthetic blocking and grouped candidate-count pass.</td></tr>
+<tr><td>Spark Engine</td><td>10,000</td><td>0.0953</td><td>6,245,000</td><td>measured</td><td>Measured with Spark local[*] range, blocking, and grouped candidate-count pass.</td></tr>
+<tr><td>Local Engine</td><td>100,000</td><td>0.0084</td><td>624,950,000</td><td>measured</td><td>Measured local synthetic blocking and grouped candidate-count pass.</td></tr>
+<tr><td>Spark Engine</td><td>100,000</td><td>0.1059</td><td>624,950,000</td><td>measured</td><td>Measured with Spark local[*] range, blocking, and grouped candidate-count pass.</td></tr>
+<tr><td>Local Engine</td><td>1,000,000</td><td>0.0847</td><td>62,499,500,000</td><td>measured</td><td>Measured local synthetic blocking and grouped candidate-count pass.</td></tr>
+<tr><td>Spark Engine</td><td>1,000,000</td><td>0.1881</td><td>62,499,500,000</td><td>measured</td><td>Measured with Spark local[*] range, blocking, and grouped candidate-count pass.</td></tr></tbody></table>
+<h2>Dataset Results</h2>
+<table><thead><tr><th>Dataset</th><th>Model</th><th>Precision</th><th>Recall</th><th>F1</th><th>Runtime (s)</th><th>Memory (MB)</th></tr></thead><tbody><tr><td>companies.csv</td><td>Levenshtein</td><td>1.0</td><td>0.3846</td><td>0.5556</td><td>0.0008</td><td>0.0126</td></tr>
+<tr><td>companies.csv</td><td>Jaro-Winkler</td><td>1.0</td><td>0.5385</td><td>0.7</td><td>0.0006</td><td>0.0082</td></tr>
+<tr><td>companies.csv</td><td>TF-IDF</td><td>1.0</td><td>0.5385</td><td>0.7</td><td>0.0121</td><td>0.0882</td></tr>
+<tr><td>companies.csv</td><td>Embeddings</td><td>1.0</td><td>0.5385</td><td>0.7</td><td>0.0009</td><td>0.009</td></tr>
+<tr><td>companies.csv</td><td>Hybrid</td><td>1.0</td><td>0.7692</td><td>0.8696</td><td>0.0125</td><td>0.0459</td></tr>
+<tr><td>companies.csv</td><td>LLM Hybrid</td><td>1.0</td><td>0.7692</td><td>0.8696</td><td>0.0258</td><td>0.0878</td></tr>
+<tr><td>people.csv</td><td>Levenshtein</td><td>1.0</td><td>0.3333</td><td>0.5</td><td>0.0006</td><td>0.0078</td></tr>
+<tr><td>people.csv</td><td>Jaro-Winkler</td><td>1.0</td><td>0.5833</td><td>0.7368</td><td>0.0006</td><td>0.0082</td></tr>
+<tr><td>people.csv</td><td>TF-IDF</td><td>1.0</td><td>1.0</td><td>1.0</td><td>0.0116</td><td>0.043</td></tr>
+<tr><td>people.csv</td><td>Embeddings</td><td>1.0</td><td>0.8333</td><td>0.9091</td><td>0.0009</td><td>0.0089</td></tr>
+<tr><td>people.csv</td><td>Hybrid</td><td>0.9231</td><td>1.0</td><td>0.96</td><td>0.0121</td><td>0.0406</td></tr>
+<tr><td>people.csv</td><td>LLM Hybrid</td><td>1.0</td><td>1.0</td><td>1.0</td><td>0.0244</td><td>0.0706</td></tr>
+<tr><td>universities.csv</td><td>Levenshtein</td><td>0.5</td><td>0.0833</td><td>0.1429</td><td>0.0006</td><td>0.0079</td></tr>
+<tr><td>universities.csv</td><td>Jaro-Winkler</td><td>0.6667</td><td>0.1667</td><td>0.2667</td><td>0.0006</td><td>0.0083</td></tr>
+<tr><td>universities.csv</td><td>TF-IDF</td><td>0.4444</td><td>0.6667</td><td>0.5333</td><td>0.0122</td><td>0.0613</td></tr>
+<tr><td>universities.csv</td><td>Embeddings</td><td>0.8</td><td>0.3333</td><td>0.4706</td><td>0.001</td><td>0.009</td></tr>
+<tr><td>universities.csv</td><td>Hybrid</td><td>0.4444</td><td>0.6667</td><td>0.5333</td><td>0.0135</td><td>0.059</td></tr>
+<tr><td>universities.csv</td><td>LLM Hybrid</td><td>0.6</td><td>1.0</td><td>0.75</td><td>0.0266</td><td>0.0895</td></tr>
+<tr><td>products.csv</td><td>Levenshtein</td><td>1.0</td><td>0.25</td><td>0.4</td><td>0.0006</td><td>0.008</td></tr>
+<tr><td>products.csv</td><td>Jaro-Winkler</td><td>1.0</td><td>0.3333</td><td>0.5</td><td>0.0006</td><td>0.0084</td></tr>
+<tr><td>products.csv</td><td>TF-IDF</td><td>1.0</td><td>1.0</td><td>1.0</td><td>0.0125</td><td>0.0712</td></tr>
+<tr><td>products.csv</td><td>Embeddings</td><td>1.0</td><td>0.4167</td><td>0.5882</td><td>0.0012</td><td>0.0098</td></tr>
+<tr><td>products.csv</td><td>Hybrid</td><td>1.0</td><td>1.0</td><td>1.0</td><td>0.014</td><td>0.0689</td></tr>
+<tr><td>products.csv</td><td>LLM Hybrid</td><td>1.0</td><td>0.8333</td><td>0.9091</td><td>0.0271</td><td>0.0988</td></tr></tbody></table>
+</body></html>
