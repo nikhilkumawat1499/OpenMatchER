@@ -270,13 +270,13 @@ This prevents the system from sending all candidate pairs to an LLM.
 
 ```mermaid
 flowchart LR
-  Projects[/projects/] --> Datasets[/projects/{id}/datasets/]
-  Projects --> Runs[/projects/{id}/runs/]
-  Runs --> Export[/projects/{id}/runs/{run_id}/export/]
-  Runs --> ReviewQueue[/projects/{id}/runs/{run_id}/review-queue/]
-  ReviewQueue --> Decisions[/review-decisions/]
-  Secrets[/settings/secrets/] --> Runs
-  Leaderboard[/leaderboard/] --> Reports[(benchmark_results.json)]
+  Projects["/projects"] --> Datasets["/projects/{project_id}/datasets"]
+  Projects --> Runs["/projects/{project_id}/runs"]
+  Runs --> Export["/projects/{project_id}/runs/{run_id}/export"]
+  Runs --> ReviewQueue["/projects/{project_id}/runs/{run_id}/review-queue"]
+  ReviewQueue --> Decisions["/review-decisions"]
+  Secrets["/settings/secrets"] --> Runs
+  Leaderboard["/leaderboard"] --> Reports[("benchmark_results.json")]
 ```
 
 ## Benchmark Architecture
