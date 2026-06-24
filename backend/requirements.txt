@@ -3,7 +3,7 @@ uvicorn[standard]==0.34.0
 pydantic==2.10.4
 pydantic-settings==2.7.1
 sqlalchemy==2.0.36
-python-multipart==0.0.20
+python-multipart==0.0.32
 pandas==2.2.3
 pyarrow==18.1.0
 pyspark==4.1.2
